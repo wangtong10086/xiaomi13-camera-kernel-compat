@@ -1,6 +1,8 @@
 # Flash and rollback
 
-Flashing is deliberately not automated by this repository. A vendor_dlkm image is build-, ABI-, partition-, and slot-specific.
+English | [简体中文](flash-and-rollback.zh-CN.md)
+
+Flashing is deliberately not automated by this repository. A vendor_dlkm image is device-, build-, ABI-, partition-, and slot-specific. The release is a prerelease recovery artifact for `fuxi`, not a general-purpose update package.
 
 Before flashing:
 

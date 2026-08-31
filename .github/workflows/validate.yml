@@ -1,0 +1,50 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static-windows:
+    name: Static (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Parse PowerShell
+        shell: pwsh
+        run: |
+          $errors = @()
+          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors)
+            $errors += $parseErrors
+          }
+          if ($errors.Count) { $errors | Format-List -Force; throw 'PowerShell parse failed.' }
+      - name: Verify overlay against pinned upstream
+        shell: pwsh
+        run: |
+          $upstream = Join-Path $env:RUNNER_TEMP modules
+          git -C $env:RUNNER_TEMP init modules
+          git -C $upstream remote add origin https://github.com/LineageOS/android_kernel_xiaomi_sm8550-modules.git
+          git -C $upstream fetch --depth 1 origin f5956ffd9766dcdae24a9f5c6a0c7512bb6b5f5a
+          git -C $upstream checkout --detach FETCH_HEAD
+          ./scripts/Apply-Overlay.ps1 -ModulesRepo $upstream
+          $changed = @(git -C $upstream status --short)
+          if ($changed.Count -ne 18) { throw "Expected 18 changed paths; found $($changed.Count)." }
+      - name: Whitespace check
+        shell: pwsh
+        run: git diff --check
+
+  shell:
+    name: Shell (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Syntax and ShellCheck
+        run: |
+          find scripts -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n
+          shellcheck scripts/*.sh

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/wangtong10086/xiaomi13-camera-kernel-compat/security/advisories/new
+    about: Report vulnerabilities or sensitive-data exposure privately.
